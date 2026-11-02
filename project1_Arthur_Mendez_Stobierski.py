@@ -1,20 +1,26 @@
 import math
 import decimal
 
+#Author: Daniel Arthur
 def sine(radians):
     """Returns sine of the passed value(must be radians)"""
     return math.sin(radians)
 
+#Author: Daniel Arthur
 def cos(radians):
     """Returns cos of the passed value(must be radians)"""
     return math.cos(radians)
 
+#Author: Daniel Arthur
 def tan(radians):
     """Returns tan of the passed value(must be radians)"""
     return math.tan(radians)
 
+#Author: Daniel Arthur
 def factorial(n):
     """Returns factorial of the given n."""
+    if(type(n) != int or n < 0):
+       raise ValueError("Domain Error")
     total = 1
     iteration_count = 0
     while(n > 1):
@@ -25,9 +31,16 @@ def factorial(n):
         iteration_count += 1
     return total
 
+#Author: Daniel Arthur
 def print_factorial_result(n):
     """Handles issues with printing the result of factorial"""
     num = 0
+    try:
+       n = int(n)
+    except ValueError as e:
+       print("Domain Error")
+       return
+
     try:
         num = factorial(n)
         if(num < math.pow(10, 6)):
@@ -35,7 +48,11 @@ def print_factorial_result(n):
         else:
             print(f"{num:e}") #Print with scientific notation
     except ValueError as e: 
-        print("Value too large") #Happens when num has too many digits to be converted to a str
+        msg = str(e)
+        if("Domain" in msg):
+           print("Domain Error")
+        else:
+            print("Value too large") #Happens when num has too many digits to be converted to a str
     except OverflowError as e:
         d = decimal.Decimal(num) #OverflowError happens when num is too large to convert through f print so decimal is needed
         print(f"{d:.2e}")
@@ -138,7 +155,7 @@ while True:
               print("Your result is:", tan(calc_radians(float(argument))))
           case "!":
             print("Your result is:", end=" ")
-            print_factorial_result(int(argument))
+            print_factorial_result(argument)
           case _:
             print("Unknown command. Make sure commands are written with a space between all expressions for binary commands, and no spaces for unary commands.")
       except ValueError:
