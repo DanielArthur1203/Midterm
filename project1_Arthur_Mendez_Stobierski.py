@@ -100,86 +100,97 @@ def calc_radians(degrees):
 
 #Author: Piotr Stobierski
 def is_number(s):
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
-
+  """Checks if a string is a number and returns the appropriate boolean value."""
+  try:
+    float(s)
+    return True
+  except ValueError:
+    return False
 
 #Author: Piotr Stobierski
-
-radian_mode = True
-
-print("Hello! Welcome to the python terminal calculator.")
-while True:
-  user_request = input("Enter any two variable operation to see its result (or enter \"help\" to see instructions), or \"exit\".\n")
-  if user_request.strip().lower() == "help":
+def run_command(user_request):
+  """Checks if passed string is a menu command. For all commands except \"exit\", the command is ran and True is returned. Passing in \"exit\" returns False. Otherwise returns None."""
+  global radian_mode
+  command = user_request.strip().lower()
+  if command == "help":
     print("Supported binary operations: addition(+), subtraction(-), multiplication(*), division(/) exponentiation(^)")
     print("Supported unary operations: cosine(cos(num)), sine(sin(num)), tangent(tan(num)), factorial(!)")
     print("Calculator can operate in radians or degrees. To change this, enter \"rad\" or \"deg\".")
     print("Current behavior is in radians.") if radian_mode else print("Current behavior is in degrees.")
-    continue
-  elif user_request.strip().lower() == "exit":
-    break
-  elif user_request.strip().lower() == "rad":
+    return 1
+  elif command == "exit":
+    return 0
+  elif command == "rad":
     radian_mode = True
     print("Input set to radians for trigonometric functions.")
-    continue
-  elif user_request.strip().lower() == "deg":
+    return 1
+  elif command == "deg":
     radian_mode = False
     print("Input set to degrees for trigonometric functions.")
-    continue
-  expression = user_request.split()
+    return 1
+
+def parse_expression(user_request):
+  '''Parses user input string and returns a list of form operand, operator, operand (operator, operand for factorial uniquely) or None for strings which fail parsing.'''
+  expression = re.split(r"([\+\-\*/\(\^!])", user_request)
   if len(expression) != 3:
-    if "(" in user_request and ")" in user_request and len(expression) == 1:
-      command, argument = user_request.split("(", 1)
-      command = command.strip().lower()
-      argument = argument.rstrip(")").strip()
-      try: 
-        match command:
-          case "cos":
-            if radian_mode:
-              print("Your result is:", cos(float(argument)))
-            else:
-              print("Your result is:", cos(calc_radians(float(argument))))
-          case "sin":
-            if radian_mode:
-              print("Your result is:", sine(float(argument)))
-            else:
-              print("Your result is:", sine(calc_radians(float(argument))))
-          case "tan":
-            if radian_mode:
-              print("Your result is:", tan(float(argument)))
-            else:
-              print("Your result is:", tan(calc_radians(float(argument))))
-          case "!":
-            print("Your result is:", end=" ")
-            print_factorial_result(argument)
-          case _:
-            print("Unknown command. Make sure commands are written with a space between all expressions for binary commands, and no spaces for unary commands.")
-      except ValueError:
-        print("Invalid argument. Make sure you provide a number within the parenthesis.")
+    return None
+  elif expression[1] == "!":
+    return expression[2], expression[1], None
+  elif expression[1] == "(":
+    expression[2] = expression[2].rstrip(')')
+    if is_number(expression[2]):
+      return expression[2], expression[0], None
     else:
-      print("Unknown command. Make sure commands are written with a space between all expressions for binary commands, and no spaces for unary commands.")
-  else:
-    try:
-      if is_number(expression[0]) and is_number(expression[2]):
-        match expression[1]:
-          case "+":
-            print("Your result is:", add(float(expression[0]), float(expression[2])))
-          case "-":
-            print("Your result is:", subtract(float(expression[0]), float(expression[2])))
-          case "*":
-            print("Your result is:", multiply(float(expression[0]), float(expression[2])))
-          case "/":
-            print("Your result is:", divide(float(expression[0]), float(expression[2])))
-          case "^":
-            print("Your result is:", power(float(expression[0]), float(expression[2])))
-          case _:
-            print("Unknown command. Make sure commands are written with a space between all expressions for binary commands, and no spaces for unary commands3.")
-      else: print("Invalid arguments. Make sure you are entering numbers for your operands.")
-    except ValueError: 
-      print("Unknown operator.")
+      return None
+  elif not (is_number(expression[0]) and is_number(expression[2])):
+      return None
+  print(expression)
+  return expression
+
+#Author: Piotr Stobierski
+radian_mode = True
+print("Hello! Welcome to the python terminal calculator.")
+while True:
+  user_request = input("Enter any two variable operation to see its result (or enter \"help\" to see instructions), or \"exit\".\n")
+  command_ran = run_command(user_request)
+  if command_ran:
+    continue
+  elif command_ran == False:
+    break
+  expression = parse_expression(user_request)
+  if expression == None:
+    print("Invalid expression.")
+    continue
+  match expression[1]:
+    case "cos":
+      if radian_mode:
+        print("Your result is:", cos(float(expression[0])))
+      else:
+        print("Your result is:", cos(calc_radians(float(expression[0]))))
+    case "sin":
+      if radian_mode:
+        print("Your result is:", sine(float(expression[0])))
+      else:
+        print("Your result is:", sine(calc_radians(float(expression[0]))))
+    case "tan":
+      if radian_mode:
+        print("Your result is:", tan(float(expression[0])))
+      else:
+        print("Your result is:", tan(calc_radians(float(expression[0]))))
+    case "!":
+      print("Your result is:", end=" ")
+      print_factorial_result(int(expression[0]))
+    case "+":
+      print("Your result is:", add(float(expression[0]), float(expression[2])))
+    case "-":
+      print("Your result is:", subtract(float(expression[0]), float(expression[2])))
+    case "*":
+      print("Your result is:", multiply(float(expression[0]), float(expression[2])))
+    case "/":
+      print("Your result is:", divide(float(expression[0]), float(expression[2])))
+    case "^":
+      print("Your result is:", power(float(expression[0]), float(expression[2])))
+    case _:
+      print("Unknown command or format. Make sure expressions are of the form num1+num2 for binary operations, and cos(num) for unary operations.")
 
 
