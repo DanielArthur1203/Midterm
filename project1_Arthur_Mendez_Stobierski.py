@@ -1,5 +1,6 @@
 import math
 import decimal
+import re
 
 #Author: Daniel Arthur
 def sine(radians):
@@ -114,7 +115,7 @@ def run_command(user_request):
   command = user_request.strip().lower()
   if command == "help":
     print("Supported binary operations: addition(+), subtraction(-), multiplication(*), division(/) exponentiation(^)")
-    print("Supported unary operations: cosine(cos(num)), sine(sin(num)), tangent(tan(num)), factorial(!)")
+    print("Supported unary operations: cosine(cos(num)), sine(sin(num)), tangent(tan(num)), factorial(!) Note: factorial is entered in postfix notation")
     print("Calculator can operate in radians or degrees. To change this, enter \"rad\" or \"deg\".")
     print("Current behavior is in radians.") if radian_mode else print("Current behavior is in degrees.")
     return 1
@@ -131,6 +132,14 @@ def run_command(user_request):
 
 def parse_expression(user_request):
   '''Parses user input string and returns a list of form operand, operator, operand (operator, operand for factorial uniquely) or None for strings which fail parsing.'''
+  unary_expression = re.fullmatch(
+      r"\s*(sin|cos|tan)\s*\(\s*([^()]*)\s*\)\s*",
+      user_request,
+      re.IGNORECASE,
+  )
+  if unary_expression and is_number(unary_expression.group(2)):
+    return unary_expression.group(2).strip(), unary_expression.group(1).lower(), None
+
   expression = re.split(r"([\+\-\*/\(\^!])", user_request)
   if len(expression) != 3:
     return None
@@ -144,7 +153,6 @@ def parse_expression(user_request):
       return None
   elif not (is_number(expression[0]) and is_number(expression[2])):
       return None
-  print(expression)
   return expression
 
 #Author: Piotr Stobierski
@@ -179,7 +187,7 @@ while True:
         print("Your result is:", tan(calc_radians(float(expression[0]))))
     case "!":
       print("Your result is:", end=" ")
-      print_factorial_result(int(expression[0]))
+      print_factorial_result(expression[0])
     case "+":
       print("Your result is:", add(float(expression[0]), float(expression[2])))
     case "-":
@@ -192,5 +200,3 @@ while True:
       print("Your result is:", power(float(expression[0]), float(expression[2])))
     case _:
       print("Unknown command or format. Make sure expressions are of the form num1+num2 for binary operations, and cos(num) for unary operations.")
-
-
