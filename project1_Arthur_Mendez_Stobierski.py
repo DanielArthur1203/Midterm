@@ -1,10 +1,6 @@
 import math
 import decimal
 
-def calc_degrees(radians)
-    """Converts and returns a value from radians to degrees"""
-    return radians * (180/math.pi)
-
 def sine(radians):
     """Returns sine of the passed value(must be radians)"""
     return math.sin(radians)
@@ -93,7 +89,11 @@ def is_number(s):
     except ValueError:
         return False
 
+
 #Author: Piotr Stobierski
+
+radian_mode = True
+
 print("Hello! Welcome to the python terminal calculator.")
 while True:
   user_request = input("Enter any two variable operation to see its result (or enter \"help\" to see instructions), or \"exit\".\n")
@@ -137,7 +137,8 @@ while True:
             else:
               print("Your result is:", tan(calc_radians(float(argument))))
           case "!":
-            print("Your result is:") + print_factorial_result(int(argument))
+            print("Your result is:", end=" ")
+            print_factorial_result(int(argument))
           case _:
             print("Unknown command. Make sure commands are written with a space between all expressions for binary commands, and no spaces for unary commands.")
       except ValueError:
