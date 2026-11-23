@@ -1,6 +1,122 @@
 import math
 import decimal
 import re
+import numpy as np
+import sympy as sp
+import matplotlib.pyplot as plt
+
+#Author: Daniel Arthur
+def numpy_gamma(values):
+  """Evaluates the Gamma function for both scalar values and NumPy arrays."""
+  scalar_gamma = np.vectorize(math.gamma, otypes=[float])
+  return scalar_gamma(values)
+
+#Author: Daniel Arthur
+def sample_function(function, x):
+  """Returns a new ndarray with resampled y values for the new x range"""
+
+  try: #Everything in the try here handles potential edge cases like zooming out too far
+    with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+      y = function(x)
+  except (OverflowError, ValueError, ZeroDivisionError):
+    y = np.full(x.shape, np.nan)
+    for index, value in enumerate(x):
+      try:
+        with np.errstate(over="ignore", invalid="ignore", divide="ignore"):
+          y[index] = function(float(value))
+      except (OverflowError, ValueError, ZeroDivisionError):
+        continue
+
+  y = np.asarray(y)
+  if np.iscomplexobj(y):
+    y = np.where(np.isclose(y.imag, 0), y.real, np.nan)
+  if y.ndim == 0:
+    y = np.full(x.shape, y.item(), dtype=float)
+  else:
+    y = np.broadcast_to(y, x.shape).astype(float, copy=True)
+  y[~np.isfinite(y)] = np.nan
+  return y
+
+
+#Author: Daniel Arthur
+def function_from_string(string: str):
+  """Returns a tuple containing the simplified function for matplotlib. If syntax is invalid then None is returned"""
+  x_sym = sp.Symbol("x")
+  x = np.linspace(-10, 10, 100)
+  if "x!" in string:
+    string = string.replace("x!", "gamma(x+1)")
+    x = np.linspace(0, 10, 100)
+  try:
+    equation = sp.simplify(string)
+    f = sp.lambdify(x_sym, equation, modules=[{"gamma": numpy_gamma}, "numpy"],)
+    y = sample_function(f, x)
+  except (sp.SympifyError, ValueError, TypeError):
+    print("Syntax Error(see help for info on syntax)")
+    return None
+  except KeyError:
+     print("Do not divide by 0 or input complex infinites(i.e. zoo)")
+     return None
+  except IndexError:
+     print("Parsing Error. Please make sure you are keeping it to arithmetic operators and trig functions.")
+     return None
+  except NameError:
+     print("Undefined Function Entered. Please make sure you are keeping it to arithmetic operators and trig functions.")
+     return None
+  except:
+    print("Syntax Error(see help for info on syntax)")
+    return None
+  return y, equation, x
+
+#Author: Daniel Arthur
+def graph(function):
+  """Plots whatever function of x was inputted provided that the syntax was valid."""
+  result = function_from_string(function)
+  if result is None: return
+
+  y = result[0]
+  equation = result[1]
+  x = result[2]
+
+  fig, ax = plt.subplots(num="Graph")
+  try:
+    line, = ax.plot(x, y, label=f"y = {equation}")
+    ax.legend()
+    ax.grid(True)
+
+    f = sp.lambdify(sp.Symbol("x"), equation, modules=[{"gamma": numpy_gamma}, "numpy"],)
+    previous_x_span = abs(x[-1] - x[0])
+
+    def update_graph(_):
+      """Callback function to update graph when the user zooms out"""
+      nonlocal previous_x_span #Force use previous_x_span in the scope of graph
+      x_min, x_max = ax.get_xlim()
+      if not np.isfinite(x_min) or not np.isfinite(x_max) or x_min == x_max:
+        return
+
+      visible_x = np.linspace(x_min, x_max, 2000)
+      visible_y = sample_function(f, visible_x)
+      line.set_data(visible_x, visible_y)
+      finite_y = visible_y[np.isfinite(visible_y)]
+      current_x_span = abs(x_max - x_min)
+
+      if current_x_span > previous_x_span and finite_y.size:
+        if np.max(np.abs(finite_y)) <= np.sqrt(np.finfo(float).max):
+          y_min, y_max = np.min(finite_y), np.max(finite_y)
+          y_margin = (y_max - y_min) * 0.05
+          if y_margin == 0:
+            y_margin = max(abs(y_min) * 0.05, 0.5)
+          ax.set_ylim(y_min - y_margin, y_max + y_margin)
+      previous_x_span = current_x_span
+      fig.canvas.draw_idle()
+
+    ax.callbacks.connect("xlim_changed", update_graph)
+    plt.show()
+  except ValueError:
+    print("Syntax Error(see help for info on syntax)")
+    return
+  except:
+     print("Syntax Error(see help for info on syntax)")
+     return
 
 #Author: Daniel Arthur
 def sine(radians):
@@ -118,6 +234,7 @@ def run_command(user_request):
     print("Supported unary operations: cosine(cos(num)), sine(sin(num)), tangent(tan(num)), factorial(!) Note: factorial is entered in postfix notation")
     print("Calculator can operate in radians or degrees. To change this, enter \"rad\" or \"deg\".")
     print("Current behavior is in radians.") if radian_mode else print("Current behavior is in degrees.")
+    print("When graphing be sure to input arithmetic operators in Python syntax. Ex: To graph y = 2x simply input 2 * x. For y = x^2 do x ** 2. Do not input any complex values")
     return 1
   elif command == "exit":
     return 0
@@ -128,6 +245,10 @@ def run_command(user_request):
   elif command == "deg":
     radian_mode = False
     print("Input set to degrees for trigonometric functions.")
+    return 1
+  elif command == "graph":
+    function = input("Enter function: ")
+    graph(function)
     return 1
 
 def parse_expression(user_request):
