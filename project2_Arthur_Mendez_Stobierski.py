@@ -155,26 +155,25 @@ def print_factorial_result(n):
     try:
        n = int(n)
     except ValueError as e:
-       print("Domain Error")
-       return
+       return "Domain Error"
 
     try:
         num = factorial(n)
         if(num < math.pow(10, 6)):
-            print(num) #Number not large enough to justify scientific notation
+            return num #Number not large enough to justify scientific notation
         else:
-            print(f"{num:e}") #Print with scientific notation
+            return f"{num:e}" #Print with scientific notation
     except ValueError as e: 
         msg = str(e)
         if("Domain" in msg):
-           print("Domain Error")
+           return "Domain Error"
         else:
-            print("Value too large") #Happens when num has too many digits to be converted to a str
+            return "Value too large" #Happens when num has too many digits to be converted to a str
     except OverflowError as e:
         d = decimal.Decimal(num) #OverflowError happens when num is too large to convert through f print so decimal is needed
-        print(f"{d:.2e}")
+        return f"{d:.2e}"
     except:
-        print("Unknown Error")
+        return "Unknown Error"
 
 #Author: Joel Mendez
 def multiply(a,b):
@@ -195,6 +194,30 @@ def power(a,b):
         return "Error: Undefined result for 0 raised to a non-positive power"
     result = a ** b
     return result
+
+# Author: Joel Mendez
+def add_to_history(history, expression, result):
+    """Saves a calculation to the history list."""
+    history.append((expression, result))
+
+
+# Author: Joel Mendez
+def show_history(history):
+    """Displays all previous calculations."""
+    if len(history) == 0:
+        print("No history yet.")
+    else:
+        number = 1
+
+        for entry in history:
+            print(f"{number}. {entry[0]} = {entry[1]}")
+            number += 1
+
+
+# Author: Joel Mendez
+def clear_history(history):
+    """Clears all previous calculations."""
+    history.clear()
 
 #Author: Piotr Stobierski
 def add(a,b):
@@ -235,6 +258,7 @@ def run_command(user_request):
     print("Calculator can operate in radians or degrees. To change this, enter \"rad\" or \"deg\".")
     print("Current behavior is in radians.") if radian_mode else print("Current behavior is in degrees.")
     print("When graphing be sure to input arithmetic operators in Python syntax. Ex: To graph y = 2x simply input 2 * x. For y = x^2 do x ** 2. Do not input any complex values")
+    print("Enter \"history\" to see your past calculations, or \"clear\" to erase them.")
     return 1
   elif command == "exit":
     return 0
@@ -249,6 +273,13 @@ def run_command(user_request):
   elif command == "graph":
     function = input("Enter function: ")
     graph(function)
+    return 1
+  elif command == "history":
+    show_history(history)
+    return 1
+  elif command == "clear":
+    clear_history(history)
+    print("History cleared.")
     return 1
 
 def parse_expression(user_request):
@@ -278,6 +309,7 @@ def parse_expression(user_request):
 
 #Author: Piotr Stobierski
 radian_mode = True
+history = []
 print("Hello! Welcome to the python terminal calculator.")
 while True:
   user_request = input("Enter any two variable operation to see its result (or enter \"help\" to see instructions), or \"exit\".\n")
@@ -290,34 +322,38 @@ while True:
   if expression == None:
     print("Invalid expression.")
     continue
+  result = None
   match expression[1]:
     case "cos":
       if radian_mode:
-        print("Your result is:", cos(float(expression[0])))
+        result = cos(float(expression[0]))
       else:
-        print("Your result is:", cos(calc_radians(float(expression[0]))))
+        result = cos(calc_radians(float(expression[0])))
     case "sin":
       if radian_mode:
-        print("Your result is:", sine(float(expression[0])))
+        result = sine(float(expression[0]))
       else:
-        print("Your result is:", sine(calc_radians(float(expression[0]))))
+        result = sine(calc_radians(float(expression[0])))
     case "tan":
       if radian_mode:
-        print("Your result is:", tan(float(expression[0])))
+        result = tan(float(expression[0]))
       else:
-        print("Your result is:", tan(calc_radians(float(expression[0]))))
+        result = tan(calc_radians(float(expression[0])))
     case "!":
-      print("Your result is:", end=" ")
-      print_factorial_result(expression[0])
+      result = print_factorial_result(expression[0])
     case "+":
-      print("Your result is:", add(float(expression[0]), float(expression[2])))
+      result = add(float(expression[0]), float(expression[2]))
     case "-":
-      print("Your result is:", subtract(float(expression[0]), float(expression[2])))
+      result = subtract(float(expression[0]), float(expression[2]))
     case "*":
-      print("Your result is:", multiply(float(expression[0]), float(expression[2])))
+      result = multiply(float(expression[0]), float(expression[2]))
     case "/":
-      print("Your result is:", divide(float(expression[0]), float(expression[2])))
+      result = divide(float(expression[0]), float(expression[2]))
     case "^":
-      print("Your result is:", power(float(expression[0]), float(expression[2])))
+      result = power(float(expression[0]), float(expression[2]))
     case _:
       print("Unknown command or format. Make sure expressions are of the form num1+num2 for binary operations, and cos(num) for unary operations.")
+  if result is not None:
+    print("Your result is:", result)
+    if is_number(str(result)):
+      add_to_history(history, user_request.strip(), result)
